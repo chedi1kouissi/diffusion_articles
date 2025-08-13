@@ -1,0 +1,13 @@
+# Required
+$env:GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
+
+# Optional (recommended allow-list of French official sources)
+$env:ALLOW_DOMAINS = "service-public.fr,economie.gouv.fr,acpr.banque-france.fr,legifrance.gouv.fr"
+
+# Optional (where to save the JSON theme store)
+$env:STORE_PATH = "C:\Users\ASUS\OneDrive\Bureau\brokins\diffusion\themes_store.json"
+
+# Optional (Flask port)
+$env:PORT = "8080"
+
+python app.py
