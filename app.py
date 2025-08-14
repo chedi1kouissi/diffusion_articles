@@ -30,6 +30,7 @@ from flask import Flask, request, jsonify
 from pydantic import BaseModel, Field, HttpUrl, ValidationError
 from slugify import slugify
 import tldextract
+import html
 
 # Gemini SDK
 from google import genai
@@ -207,9 +208,33 @@ def build_jsonld(h1: str, meta_desc: str, url_slug: str, citations: List[dict]) 
         "citation": [c["url"] for c in citations] if citations else [],
     }
 
-def gemini_generate_article(p: ArticleIn) -> ArticleOut:
-    sys_prompt = build_system_prompt(p.brand_tone or "")
-    user_prompt = build_user_prompt(p)
+def gemini_generate_article(p: ArticleIn) -> str:
+    sys_prompt = build_system_prompt(p.brand_tone or "") + (
+        "\nConsigne de sortie: renvoie UNIQUEMENT l'article en HTML propre (pas de JSON, pas de texte autour)."
+    )
+
+    # Prompt orienté article direct, sans structure JSON
+    domain_hint = ""
+    if p.allow_domains:
+        domain_hint = (
+            "Privilégie des sources françaises officielles ou fiables, notamment: "
+            + ", ".join(p.allow_domains)
+            + ". "
+        )
+    url_hint = ""
+    if p.url_context:
+        url_hint = "Analyse aussi le contenu des URLs fournies (si accessibles). "
+
+    user_prompt = (
+        f"Sujet: {p.topic}\n"
+        f"Requête cible (mot-clé principal): \"{p.target_query}\"\n\n"
+        "Contraintes:\n"
+        f"- Longueur: {p.min_words}–{p.max_words} mots.\n"
+        f"- Sources: {p.min_sources}+ sources récentes (≤ {p.recency_days} jours) ET/OU reconnues comme références stables.\n"
+        f"- {domain_hint}{url_hint}\n"
+        "- Évite les promesses absolues et les détails juridiques susceptibles de changer. Reste pédagogique.\n\n"
+        "Livrable: ARTICLE UNIQUEMENT en HTML propre (H1, chapo court, sections H2/H3, listes/tableaux si utile, conclusion)."
+    )
 
     tools = [google_search_tool()]
     if p.url_context:
@@ -217,7 +242,7 @@ def gemini_generate_article(p: ArticleIn) -> ArticleOut:
 
     cli = gclient()
 
-    # Outline first (Flash), optional
+    # Option: plan rapide
     outline_text = None
     if p.two_phase:
         outline_cfg = types.GenerateContentConfig(
@@ -226,7 +251,6 @@ def gemini_generate_article(p: ArticleIn) -> ArticleOut:
             temperature=0.4,
             top_p=0.9,
             max_output_tokens=700,
-            response_mime_type="text/plain",
         )
         prompt_outline = user_prompt + "\n\nNe renvoie qu'un plan (H2/H3) + chapo."
         outline_resp = cli.models.generate_content(
@@ -236,15 +260,13 @@ def gemini_generate_article(p: ArticleIn) -> ArticleOut:
         )
         outline_text = outline_resp.text or ""
 
-    # Full article (Pro) with JSON schema
+    # Article complet
     config = types.GenerateContentConfig(
         system_instruction=sys_prompt,
         tools=tools,
         temperature=0.6,
         top_p=0.9,
         max_output_tokens=2400,
-        response_mime_type="application/json",
-        response_schema=ArticleOut,
     )
 
     full_prompt = user_prompt
@@ -259,32 +281,127 @@ def gemini_generate_article(p: ArticleIn) -> ArticleOut:
         config=config,
     )
 
-    parsed = getattr(resp, "parsed", None)
-    text = resp.text or "{}"
+    html_text = resp.text or ""
+    # Nettoyage basique si le modèle entoure dans des fences
+    if html_text.strip().startswith("```"):
+        html_text = html_text.strip().strip("`")
+        # Retire un éventuel indicateur de langage comme 'html'
+        if html_text.startswith("html"):
+            html_text = html_text[len("html"):].lstrip()
+
+    return html_text.strip()
+
+def _extract_first_json_object(text: str):
+    """Return the first valid JSON object found in text, or None."""
     try:
-        data = parsed if parsed else json.loads(text)
+        import json as _json
+    except Exception:
+        return None
+    depth = 0
+    start = None
+    for idx, ch in enumerate(text):
+        if ch == '{':
+            if depth == 0:
+                start = idx
+            depth += 1
+        elif ch == '}':
+            if depth > 0:
+                depth -= 1
+                if depth == 0 and start is not None:
+                    candidate = text[start : idx + 1]
+                    try:
+                        return _json.loads(candidate)
+                    except Exception:
+                        start = None
+                        continue
+    return None
+
+
+def _structure_with_model(raw_text: str, p: ArticleIn) -> dict:
+    """Second-pass: ask the model (no tools) to emit strict JSON matching ArticleOut."""
+    cli = gclient()
+    sys_msg = (
+        "Transforme le contenu suivant en un JSON STRICT conforme au schéma ArticleOut. "
+        "Renvoie UNIQUEMENT du JSON sans texte autour. N'invente pas 'sources' (laisse vide), "
+        "et respecte la langue fr-FR."
+    )
+    cfg = types.GenerateContentConfig(
+        system_instruction=sys_msg,
+        temperature=0.2,
+        top_p=0.95,
+        max_output_tokens=1800,
+    )
+    prompt = (
+        f"Sujet: {p.topic}\n"
+        f"Requête cible: {p.target_query}\n\n"
+        "Contenu à structurer ci-dessous. Convertis-le en JSON ArticleOut (h1, slug, meta_description, outline, html, keywords, faqs, schema_jsonld, sources=[]):\n\n"
+        f"{raw_text}"
+    )
+    resp = cli.models.generate_content(
+        model="gemini-2.5-pro",
+        contents=prompt,
+        config=cfg,
+    )
+    parsed = getattr(resp, "parsed", None)
+    if parsed:
+        return parsed
+    text = resp.text or "{}"
+    # Try direct JSON
+    try:
+        return json.loads(text)
     except json.JSONDecodeError:
+        pass
+    # Try fenced
+    try:
         cleaned = text.strip().removeprefix("```json").removesuffix("```").strip()
-        data = json.loads(cleaned)
+        return json.loads(cleaned)
+    except Exception:
+        pass
+    # Try first object extraction
+    extracted = _extract_first_json_object(text)
+    if extracted is not None:
+        return extracted
+    # Last resort: synthesize minimal valid structure using escaped raw text
+    minimal = {
+        "h1": p.topic,
+        "slug": slugify(p.topic),
+        "meta_description": p.target_query[:155],
+        "outline": [],
+        "html": f"<p>{html.escape(text or raw_text)}</p>",
+        "keywords": [p.target_query],
+        "faqs": [],
+        "sources": [],
+        "schema_jsonld": build_jsonld(p.topic, p.target_query[:155], slugify(p.topic), []),
+    }
+    return minimal
 
-    if not data.get("slug"):
-        data["slug"] = slugify(data.get("h1", p.topic))
-
-    citations = extract_citations(resp)
-    data["sources"] = citations
-
-    if not data.get("schema_jsonld"):
-        data["schema_jsonld"] = build_jsonld(
-            data.get("h1", p.topic),
-            data.get("meta_description", ""),
-            data.get("slug", slugify(p.topic)),
+def _normalize_article_dict(data: dict, p: ArticleIn, citations: List[dict]) -> dict:
+    result = dict(data or {})
+    if not result.get("h1"):
+        result["h1"] = p.topic
+    if not result.get("meta_description"):
+        fallback_meta = (p.target_query or p.topic or "")[:155]
+        result["meta_description"] = fallback_meta
+    if not isinstance(result.get("outline"), list):
+        result["outline"] = []
+    if not result.get("html"):
+        result["html"] = f"<h1>{html.escape(result['h1'])}</h1><p>{html.escape(p.topic)}</p>"
+    if not isinstance(result.get("faqs"), list):
+        result["faqs"] = []
+    if "keywords" not in result or not isinstance(result["keywords"], list) or not result["keywords"]:
+        result["keywords"] = [p.target_query]
+    if "sources" not in result or not isinstance(result["sources"], list):
+        result["sources"] = citations or []
+    if not result.get("slug"):
+        result["slug"] = slugify(result["h1"])
+    if not result.get("schema_jsonld"):
+        result["schema_jsonld"] = build_jsonld(
+            result["h1"],
+            result["meta_description"],
+            result["slug"],
             citations,
         )
-
-    if not data.get("keywords"):
-        data["keywords"] = [p.target_query]
-
-    return ArticleOut(**data)
+    return result
 
 # ---------------------- THEME OPS (FILE-BASED) ----------------------
 
@@ -401,7 +518,7 @@ def generate_article_from_random_theme():
                 "titre": chosen.get("titre"),
                 "mot_cle_principal": chosen.get("mot_cle_principal"),
             },
-            "article": article.model_dump(),
+            "article": article,
         }
     )
 
@@ -423,9 +540,9 @@ def generate_article_direct():
     except Exception as e:
         return jsonify({"error": f"Generation failed: {e}"}), 500
 
-    return jsonify(article.model_dump())
+    return jsonify(article)
 
 # ---------------------- MAIN ----------------------
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8084)))
