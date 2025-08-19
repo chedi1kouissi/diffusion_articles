@@ -11,6 +11,7 @@ $env:STORE_PATH = "C:\Users\ASUS\OneDrive\Bureau\brokins\diffusion\themes_store.
 $env:PORT = "8080"
 
 python app.py
+set GEMINI_API_KEY=AIzaSyBoimiC-sQpbejeXG_VfY0puQ1otMcC-T8
 
 
 
