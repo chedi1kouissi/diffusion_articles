@@ -41,8 +41,8 @@
       "intention": "informationnelle",
       "type_evergreen": "fondamentaux",
       "notes": "Définir clairement carence vs franchise; exemples simples.",
-      "consumed": 0,
-      "consumed_at": null
+      "consumed": 1,
+      "consumed_at": "2025-08-20T13:35:42+00:00"
     },
     {
       "id": 5,
@@ -239,8 +239,8 @@
       "intention": "informationnelle",
       "type_evergreen": "guide",
       "notes": "Expliquer critères et méthode de comparaison.",
-      "consumed": 0,
-      "consumed_at": null
+      "consumed": true,
+      "consumed_at": "2025-09-26T17:05:30+00:00"
     },
     {
       "id": 23,
@@ -360,8 +360,8 @@
       "intention": "informationnelle",
       "type_evergreen": "guide",
       "notes": "Spécificités de répartition du risque.",
-      "consumed": 0,
-      "consumed_at": null
+      "consumed": true,
+      "consumed_at": "2025-09-22T17:59:05+00:00"
     },
     {
       "id": 34,
@@ -448,8 +448,8 @@
       "intention": "informationnelle",
       "type_evergreen": "fondamentaux",
       "notes": "Stabilité d’emploi, garanties à calibrer.",
-      "consumed": 0,
-      "consumed_at": null
+      "consumed": 1,
+      "consumed_at": "2025-08-20T12:08:38+00:00"
     },
     {
       "id": 42,
@@ -481,8 +481,8 @@
       "intention": "informationnelle",
       "type_evergreen": "comparaison",
       "notes": "Restrictions d’âge possibles; rester général.",
-      "consumed": 0,
-      "consumed_at": null
+      "consumed": 1,
+      "consumed_at": "2025-08-20T12:20:17+00:00"
     },
     {
       "id": 45,
@@ -536,8 +536,8 @@
       "intention": "informationnelle",
       "type_evergreen": "comparaison",
       "notes": "Différences de risque; déclaration honnête.",
-      "consumed": 0,
-      "consumed_at": null
+      "consumed": true,
+      "consumed_at": "2025-08-26T10:48:49+00:00"
     },
     {
       "id": 50,
@@ -657,8 +657,8 @@
       "intention": "investigation commerciale",
       "type_evergreen": "comparaison",
       "notes": "Mettre en avant effet sur coût total et cash‑flow.",
-      "consumed": 0,
-      "consumed_at": null
+      "consumed": 1,
+      "consumed_at": "2025-08-20T12:08:15+00:00"
     },
     {
       "id": 61,
@@ -855,8 +855,8 @@
       "intention": "informationnelle",
       "type_evergreen": "fondamentaux",
       "notes": "Rester général; rappeler que conditions évoluent.",
-      "consumed": 0,
-      "consumed_at": null
+      "consumed": true,
+      "consumed_at": "2025-09-26T17:26:44+00:00"
     },
     {
       "id": 79,
@@ -866,8 +866,8 @@
       "intention": "informationnelle",
       "type_evergreen": "fondamentaux",
       "notes": "Parler confidentialité et minimisation des données.",
-      "consumed": 0,
-      "consumed_at": null
+      "consumed": true,
+      "consumed_at": "2025-08-26T10:52:08+00:00"
     },
     {
       "id": 80,
@@ -1075,8 +1075,8 @@
       "intention": "informationnelle",
       "type_evergreen": "myth‑busting",
       "notes": "Expliquer cas où l’impact est limité.",
-      "consumed": 0,
-      "consumed_at": null
+      "consumed": 1,
+      "consumed_at": "2025-08-20T12:17:02+00:00"
     },
     {
       "id": 99,

@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de contenus – Assurance emprunteur</title>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #059669;
+            --error: #dc2626;
+            --warning: #d97706;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-600: #4b5563;
+            --gray-800: #1f2937;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: var(--gray-50);
+            color: var(--gray-800);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 24px;
+        }
+
+        .health-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .health-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--error);
+        }
+
+        .health-dot.healthy {
+            background: var(--success);
+        }
+
+        .section {
+            background: white;
+            margin-bottom: 20px;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            margin: 0 0 20px 0;
+            color: var(--gray-800);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 500;
+            color: var(--gray-600);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-800);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--gray-200);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .flex {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .table th,
+        .table td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .table th {
+            background: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-600);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .table tbody tr:hover {
+            background: var(--gray-50);
+        }
+
+        .card {
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .card-header {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--gray-800);
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--gray-200);
+            margin: 20px 0 0 0;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-weight: 500;
+            color: var(--gray-600);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            padding: 20px 0;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        .article-preview {
+            border: 1px solid var(--gray-200);
+            border-radius: 4px;
+            padding: 20px;
+            background: white;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .article-preview h2 {
+            color: var(--gray-800);
+            margin-top: 0;
+        }
+
+        .article-preview h3 {
+            color: var(--gray-600);
+        }
+
+        .social-content {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        .social-item {
+            border: 1px solid var(--gray-200);
+            border-radius: 4px;
+            padding: 16px;
+        }
+
+        .social-item h4 {
+            margin: 0 0 8px 0;
+            color: var(--gray-800);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .social-item p {
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .twitter-thread {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .twitter-thread li {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .twitter-thread li:last-child {
+            border-bottom: none;
+        }
+
+        .hashtags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .hashtag {
+            background: var(--gray-100);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            color: var(--gray-600);
+        }
+
+        .json-output {
+            width: 100%;
+            height: 400px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 4px;
+            padding: 12px;
+            background: var(--gray-50);
+            resize: vertical;
+        }
+
+        .helper-text {
+            font-size: 12px;
+            color: var(--gray-600);
+            margin-top: 4px;
+        }
+
+        .status-message {
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .status-success {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(5, 150, 105, 0.2);
+        }
+
+        .status-error {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(220, 38, 38, 0.2);
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 6px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            min-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            background: var(--success);
+        }
+
+        .toast.error {
+            background: var(--error);
+        }
+
+        .toast.warning {
+            background: var(--warning);
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray-600);
+        }
+
+        .settings-panel {
+            margin-bottom: 20px;
+            padding: 16px;
+            background: var(--gray-100);
+            border-radius: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            
+            .flex {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .social-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Générateur de contenus – Assurance emprunteur</h1>
+            <div class="health-indicator">
+                <span class="health-dot" id="healthDot"></span>
+                <span id="healthStatus">Vérification...</span>
+            </div>
+        </div>
+
+        <!-- Settings Panel -->
+        <div class="settings-panel">
+            <label for="backendUrl">URL du backend :</label>
+            <input type="url" id="backendUrl" class="form-control" value="/api" style="margin-top: 4px;">
+            <div class="helper-text">
+                Modifiez si le serveur Flask fonctionne sur un autre port<br>
+                <strong>💡 Astuce :</strong> Si la génération est lente, redémarrez le serveur avec <code>set MOCK_GEN=1 && python app.py</code> pour des tests rapides
+            </div>
+        </div>
+
+        <!-- Section 1: Import Themes -->
+        <div class="section">
+            <h2>1. Importer des thèmes</h2>
+            <div class="form-group">
+                <label for="csvPath">Chemin du fichier CSV :</label>
+                <input type="text" id="csvPath" class="form-control" placeholder="test_themes.csv" value="test_themes.csv">
+                <div class="helper-text">Le fichier doit être accessible au processus serveur</div>
+            </div>
+            <div class="flex">
+                <button id="importBtn" class="btn btn-primary">Importer</button>
+            </div>
+            <div id="importResult"></div>
+        </div>
+
+        <!-- Section 2: Available Themes -->
+        <div class="section">
+            <h2>2. Thèmes disponibles</h2>
+            <div class="flex">
+                <button id="refreshBtn" class="btn btn-secondary">Rafraîchir</button>
+                <button id="resetBtn" class="btn btn-warning">Réinitialiser les thèmes</button>
+            </div>
+            <div id="themesContainer">
+                <div class="empty-state">Cliquez sur "Rafraîchir" pour charger les thèmes</div>
+            </div>
+        </div>
+
+        <!-- Section 3: Generate Content -->
+        <div class="section">
+            <h2>3. Générer un contenu</h2>
+            <button id="generateBtn" class="btn btn-success">Générer</button>
+            
+            <!-- Selected Theme -->
+            <div id="selectedTheme" style="display: none;">
+                <div class="card">
+                    <div class="card-header">Thème sélectionné</div>
+                    <div id="themeDetails"></div>
+                </div>
+            </div>
+
+            <!-- Content Tabs -->
+            <div id="contentTabs" style="display: none;">
+                <div class="tabs">
+                    <div class="tab active" data-tab="preview">Aperçu article</div>
+                    <div class="tab" data-tab="social">Social</div>
+                    <div class="tab" data-tab="json">JSON</div>
+                </div>
+
+                <div class="tab-content">
+                    <!-- Article Preview -->
+                    <div class="tab-pane active" id="tab-preview">
+                        <div class="flex" style="margin-bottom: 16px;">
+                            <button id="copyHtmlBtn" class="btn btn-secondary btn-sm">Copier HTML article</button>
+                            <button id="downloadHtmlBtn" class="btn btn-secondary btn-sm">Télécharger HTML</button>
+                        </div>
+                        <div id="articlePreview" class="article-preview">
+                            <div class="empty-state">Aucun contenu généré</div>
+                        </div>
+                    </div>
+
+                    <!-- Social Content -->
+                    <div class="tab-pane" id="tab-social">
+                        <div id="socialContent" class="social-content">
+                            <div class="empty-state">Aucun contenu social généré</div>
+                        </div>
+                    </div>
+
+                    <!-- JSON Output -->
+                    <div class="tab-pane" id="tab-json">
+                        <div class="flex" style="margin-bottom: 16px;">
+                            <button id="copyJsonBtn" class="btn btn-secondary btn-sm">Copier JSON</button>
+                        </div>
+                        <textarea id="jsonOutput" class="json-output" readonly placeholder="Aucune réponse JSON disponible"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        let BASE_URL = '/api'; // Use proxy when served via serve_ui.py
+        let currentGeneratedData = null;
+        let currentArticleHtml = null;
+
+        // Utility Functions
+        async function fetchJson(url, options = {}) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutes timeout for content generation
+
+            try {
+                const backendUrl = document.getElementById('backendUrl').value.trim();
+                if (backendUrl) {
+                    BASE_URL = backendUrl;
+                }
+                
+                const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`;
+                
+                const response = await fetch(fullUrl, {
+                    ...options,
+                    signal: controller.signal,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    }
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    let errorMsg = `HTTP ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        errorMsg = errorData.error || errorMsg;
+                    } catch (e) {
+                        // Use status text if JSON parsing fails
+                        errorMsg = response.statusText || errorMsg;
+                    }
+                    throw new Error(errorMsg);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                clearTimeout(timeoutId);
+                if (error.name === 'AbortError') {
+                    throw new Error('Timeout : la génération prend trop de temps. Essayez le mode mock (MOCK_GEN=1) pour des tests rapides.');
+                }
+                throw error;
+            }
+        }
+
+        function toast(message, type = 'success') {
+            // Remove existing toasts
+            document.querySelectorAll('.toast').forEach(t => t.remove());
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            // Show toast
+            setTimeout(() => toast.classList.add('show'), 100);
+            
+            // Hide and remove toast
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function setLoading(element, loading) {
+            if (loading) {
+                element.classList.add('loading');
+            } else {
+                element.classList.remove('loading');
+            }
+        }
+
+        function extractArticleHtml(completeHtml) {
+            if (!completeHtml) return '';
+            
+            // Create a temporary DOM element to parse the HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = completeHtml;
+            
+            // Try to find the article content
+            let articleContent = tempDiv.querySelector('article');
+            if (articleContent) {
+                return articleContent.innerHTML;
+            }
+            
+            // If no article tag, look for content after the first h1
+            const h1 = tempDiv.querySelector('h1');
+            if (h1) {
+                let content = '';
+                let sibling = h1.nextElementSibling;
+                while (sibling) {
+                    if (sibling.classList.contains('social-content')) {
+                        break; // Stop before social content
+                    }
+                    content += sibling.outerHTML;
+                    sibling = sibling.nextElementSibling;
+                }
+                return content;
+            }
+            
+            // Fallback: return everything but remove html/head/body tags
+            let cleanHtml = completeHtml;
+            cleanHtml = cleanHtml.replace(/<\/?html[^>]*>/gi, '');
+            cleanHtml = cleanHtml.replace(/<head>[\s\S]*?<\/head>/gi, '');
+            cleanHtml = cleanHtml.replace(/<\/?body[^>]*>/gi, '');
+            cleanHtml = cleanHtml.replace(/<style>[\s\S]*?<\/style>/gi, '');
+            
+            return cleanHtml.trim();
+        }
+
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                toast('Copié dans le presse-papiers', 'success');
+            } catch (err) {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                toast('Copié dans le presse-papiers', 'success');
+            }
+        }
+
+        function downloadHtml(content, filename = 'article_body.html') {
+            const blob = new Blob([content], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            toast('Fichier téléchargé', 'success');
+        }
+
+        // Health Check
+        async function checkHealth() {
+            const healthDot = document.getElementById('healthDot');
+            const healthStatus = document.getElementById('healthStatus');
+            
+            try {
+                await fetchJson('/');
+                healthDot.classList.add('healthy');
+                healthStatus.textContent = 'Serveur en ligne';
+            } catch (error) {
+                healthDot.classList.remove('healthy');
+                healthStatus.textContent = 'Serveur hors ligne';
+            }
+        }
+
+        // Import Themes
+        async function importThemes() {
+            const csvPath = document.getElementById('csvPath').value.trim();
+            const importBtn = document.getElementById('importBtn');
+            const importResult = document.getElementById('importResult');
+            
+            if (!csvPath) {
+                toast('Veuillez saisir un chemin de fichier CSV', 'error');
+                return;
+            }
+            
+            setLoading(importBtn, true);
+            importResult.innerHTML = '';
+            
+            try {
+                const result = await fetchJson('/themes/import', {
+                    method: 'POST',
+                    body: JSON.stringify({ csv_path: csvPath })
+                });
+                
+                importResult.innerHTML = `
+                    <div class="status-message status-success">
+                        ✓ Import réussi : ${result.imported} thème(s) importé(s)
+                    </div>
+                `;
+                
+                toast(`${result.imported} thème(s) importé(s)`, 'success');
+                
+                // Auto-refresh themes
+                setTimeout(refreshThemes, 500);
+                
+            } catch (error) {
+                importResult.innerHTML = `
+                    <div class="status-message status-error">
+                        ✗ Erreur d'import : ${error.message}
+                    </div>
+                `;
+                toast(`Erreur d'import : ${error.message}`, 'error');
+            } finally {
+                setLoading(importBtn, false);
+            }
+        }
+
+        // Refresh Themes
+        async function refreshThemes() {
+            const refreshBtn = document.getElementById('refreshBtn');
+            const themesContainer = document.getElementById('themesContainer');
+            
+            setLoading(refreshBtn, true);
+            
+            try {
+                const result = await fetchJson('/themes/available');
+                
+                if (result.themes && result.themes.length > 0) {
+                    const tableHtml = `
+                        <div style="margin-bottom: 8px; font-size: 14px; color: var(--gray-600);">
+                            ${result.available} thème(s) disponible(s)
+                        </div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Titre</th>
+                                    <th>Mot-clé principal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${result.themes.map(theme => `
+                                    <tr>
+                                        <td>${theme.id}</td>
+                                        <td>${DOMPurify.sanitize(theme.titre)}</td>
+                                        <td>${DOMPurify.sanitize(theme.mot_cle_principal)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                    themesContainer.innerHTML = tableHtml;
+                } else {
+                    themesContainer.innerHTML = '<div class="empty-state">Aucun thème disponible</div>';
+                }
+                
+            } catch (error) {
+                themesContainer.innerHTML = `
+                    <div class="status-message status-error">
+                        ✗ Erreur de chargement : ${error.message}
+                    </div>
+                `;
+                toast(`Erreur de chargement : ${error.message}`, 'error');
+            } finally {
+                setLoading(refreshBtn, false);
+            }
+        }
+
+        // Reset Themes
+        async function resetThemes() {
+            const resetBtn = document.getElementById('resetBtn');
+            
+            if (!confirm('Êtes-vous sûr de vouloir réinitialiser tous les thèmes ?')) {
+                return;
+            }
+            
+            setLoading(resetBtn, true);
+            
+            try {
+                await fetchJson('/themes/reset', { method: 'POST' });
+                toast('Thèmes réinitialisés avec succès', 'success');
+                setTimeout(refreshThemes, 500);
+            } catch (error) {
+                toast(`Erreur de réinitialisation : ${error.message}`, 'error');
+            } finally {
+                setLoading(resetBtn, false);
+            }
+        }
+
+        // Generate Content
+        async function generateContent() {
+            const generateBtn = document.getElementById('generateBtn');
+            const selectedTheme = document.getElementById('selectedTheme');
+            const contentTabs = document.getElementById('contentTabs');
+            
+            // Show progress message
+            generateBtn.textContent = 'Génération en cours...';
+            generateBtn.disabled = true;
+            setLoading(generateBtn, true);
+            selectedTheme.style.display = 'none';
+            contentTabs.style.display = 'none';
+            
+            // Show progress toast
+            toast('Génération en cours, veuillez patienter (jusqu\'à 2 minutes)...', 'warning');
+            
+            try {
+                const result = await fetchJson('/generate', { method: 'POST' });
+                
+                currentGeneratedData = result;
+                
+                // Show selected theme
+                const themeDetails = document.getElementById('themeDetails');
+                themeDetails.innerHTML = `
+                    <div><strong>ID :</strong> ${result.theme.id}</div>
+                    <div><strong>Titre :</strong> ${DOMPurify.sanitize(result.theme.titre)}</div>
+                    <div><strong>Mot-clé :</strong> ${DOMPurify.sanitize(result.theme.mot_cle_principal)}</div>
+                    <div><strong>Généré le :</strong> ${new Date(result.generated_at).toLocaleString('fr-FR')}</div>
+                `;
+                selectedTheme.style.display = 'block';
+                
+                // Extract and display article content
+                currentArticleHtml = extractArticleHtml(result.complete_html);
+                const articlePreview = document.getElementById('articlePreview');
+                articlePreview.innerHTML = DOMPurify.sanitize(currentArticleHtml);
+                
+                // Display social content
+                displaySocialContent(result.social_content);
+                
+                // Display JSON
+                const jsonOutput = document.getElementById('jsonOutput');
+                jsonOutput.value = JSON.stringify(result, null, 2);
+                
+                contentTabs.style.display = 'block';
+                toast('Contenu généré avec succès', 'success');
+                
+            } catch (error) {
+                toast(`Erreur de génération : ${error.message}`, 'error');
+            } finally {
+                // Reset button state
+                generateBtn.textContent = 'Générer';
+                generateBtn.disabled = false;
+                setLoading(generateBtn, false);
+            }
+        }
+
+        function displaySocialContent(socialContent) {
+            const socialContainer = document.getElementById('socialContent');
+            
+            if (!socialContent) {
+                socialContainer.innerHTML = '<div class="empty-state">Aucun contenu social généré</div>';
+                return;
+            }
+            
+            const linkedinHtml = socialContent.linkedin_caption ? `
+                <div class="social-item">
+                    <h4>LinkedIn</h4>
+                    <p>${DOMPurify.sanitize(socialContent.linkedin_caption.replace(/\n/g, '<br>'))}</p>
+                </div>
+            ` : '';
+            
+            const instagramHtml = socialContent.instagram_caption ? `
+                <div class="social-item">
+                    <h4>Instagram</h4>
+                    <p>${DOMPurify.sanitize(socialContent.instagram_caption.replace(/\n/g, '<br>'))}</p>
+                </div>
+            ` : '';
+            
+            const twitterHtml = socialContent.twitter_thread ? `
+                <div class="social-item">
+                    <h4>Thread Twitter/X</h4>
+                    <ul class="twitter-thread">
+                        ${socialContent.twitter_thread.map((tweet, index) => `
+                            <li><strong>${index + 1}.</strong> ${DOMPurify.sanitize(tweet)}</li>
+                        `).join('')}
+                    </ul>
+                </div>
+            ` : '';
+            
+            const hashtagsHtml = socialContent.hashtags ? `
+                <div class="social-item">
+                    <h4>Hashtags</h4>
+                    <div class="hashtags">
+                        ${socialContent.hashtags.map(tag => `
+                            <span class="hashtag">${DOMPurify.sanitize(tag)}</span>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : '';
+            
+            socialContainer.innerHTML = linkedinHtml + instagramHtml + twitterHtml + hashtagsHtml;
+        }
+
+        // Copy HTML Article
+        async function copyHtmlArticle() {
+            if (!currentArticleHtml) {
+                toast('Aucun contenu article à copier', 'warning');
+                return;
+            }
+            
+            await copyToClipboard(currentArticleHtml);
+        }
+
+        // Download HTML
+        function downloadHtmlArticle() {
+            if (!currentArticleHtml) {
+                toast('Aucun contenu article à télécharger', 'warning');
+                return;
+            }
+            
+            const filename = currentGeneratedData && currentGeneratedData.slug 
+                ? `${currentGeneratedData.slug}.html` 
+                : 'article_body.html';
+            
+            downloadHtml(currentArticleHtml, filename);
+        }
+
+        // Copy JSON
+        async function copyJson() {
+            const jsonOutput = document.getElementById('jsonOutput');
+            if (!jsonOutput.value.trim()) {
+                toast('Aucun JSON à copier', 'warning');
+                return;
+            }
+            
+            await copyToClipboard(jsonOutput.value);
+        }
+
+        // Tab Management
+        function initTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            const panes = document.querySelectorAll('.tab-pane');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const targetTab = tab.dataset.tab;
+                    
+                    // Update tab active state
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Update pane active state
+                    panes.forEach(pane => pane.classList.remove('active'));
+                    document.getElementById(`tab-${targetTab}`).classList.add('active');
+                });
+            });
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize tabs
+            initTabs();
+            
+            // Initial health check
+            checkHealth();
+            
+            // Health check every 10 seconds
+            setInterval(checkHealth, 10000);
+            
+            // Event listeners
+            document.getElementById('importBtn').addEventListener('click', importThemes);
+            document.getElementById('refreshBtn').addEventListener('click', refreshThemes);
+            document.getElementById('resetBtn').addEventListener('click', resetThemes);
+            document.getElementById('generateBtn').addEventListener('click', generateContent);
+            document.getElementById('copyHtmlBtn').addEventListener('click', copyHtmlArticle);
+            document.getElementById('downloadHtmlBtn').addEventListener('click', downloadHtmlArticle);
+            document.getElementById('copyJsonBtn').addEventListener('click', copyJson);
+            
+            // Enter key support for CSV path
+            document.getElementById('csvPath').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    importThemes();
+                }
+            });
+            
+            // Update BASE_URL when backend URL changes
+            document.getElementById('backendUrl').addEventListener('change', () => {
+                BASE_URL = document.getElementById('backendUrl').value.trim();
+                checkHealth(); // Recheck health with new URL
+            });
+        });
+    </script>
+</body>
+</html>
